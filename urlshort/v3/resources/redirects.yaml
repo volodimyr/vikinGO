@@ -1,0 +1,4 @@
+- path: /gotchas
+  url: http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/index.html
+- path: /golang-doc
+  url: https://golang.org/doc/
