@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/volodimyr/vikinGO/cli_task_manager/persistent"
 	"os"
+	"strings"
 )
 
 func init() {
@@ -31,7 +33,15 @@ var add = &cobra.Command{
 	Use:   "add",
 	Short: "Add a new task to your TODO list",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Adding your task...")
+		task := strings.Join(args, " ")
+		if task == "" {
+			fmt.Println("Task cannot be empty")
+			return
+		}
+		done := persistent.AddTask(strings.Join(args, " "))
+		if done {
+			fmt.Println("Task has been added.")
+		}
 	},
 }
 
@@ -39,7 +49,15 @@ var list = &cobra.Command{
 	Use:   "list",
 	Short: "List all of your incomplete tasks",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Listing your tasks...")
+		tasks := persistent.ViewTasks()
+		if len(tasks) == 0 {
+			fmt.Println("Not found")
+		}
+		index := 1
+		for _, v := range tasks {
+			fmt.Printf("%d. %s\n", index, v.Name)
+			index++
+		}
 	},
 }
 
