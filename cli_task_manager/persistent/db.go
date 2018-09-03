@@ -34,7 +34,12 @@ func openDBConn() *bolt.DB {
 
 func AddTask(name string) bool {
 	db := openDBConn()
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("Failed close db connection %v\n", err)
+		}
+	}()
 
 	err := db.Update(func(tx *bolt.Tx) error {
 		buck, err := tx.CreateBucketIfNotExists([]byte(bucket))
@@ -64,6 +69,80 @@ func AddTask(name string) bool {
 	return true
 }
 
+func MarkCompleted(id int) bool {
+	db := openDBConn()
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("Failed close db connection %v\n", err)
+		}
+	}()
+
+	t := Task{}
+
+	db.View(func(tx *bolt.Tx) error {
+		buck := tx.Bucket([]byte(bucket))
+		if buck == nil {
+			log.Fatalln("Couldn't get bucket error")
+		}
+		v := buck.Get([]byte(itob(id)))
+		if v == nil {
+			log.Fatalf("Couldn't find next element [%d]", id)
+		}
+		err := json.Unmarshal([]byte(v), &t)
+		if err != nil {
+			log.Fatalf("Error unmarshalling task %v\n", err)
+		}
+		return nil
+	})
+	db.Update(func(tx *bolt.Tx) error {
+		buck := tx.Bucket([]byte(bucket))
+		if buck == nil {
+			log.Fatalln("Couldn't get bucket error")
+		}
+		t.Completed = true
+		encoded, err := json.Marshal(t)
+		if err != nil {
+			log.Fatalf("Failed marshall task\n %v", err)
+		}
+		err = buck.Put(itob(int(id)), []byte(encoded))
+		if err != nil {
+			log.Fatalf("Failed store task to db\n %v", err)
+		}
+		return nil
+	})
+	return true
+}
+
+func RemoveTask(id int) bool {
+	db := openDBConn()
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("Failed close db connection %v\n", err)
+		}
+	}()
+
+	err := db.Update(func(tx *bolt.Tx) error {
+		buck, err := tx.CreateBucketIfNotExists([]byte(bucket))
+		if err != nil {
+			log.Fatalf("Create bucket operation failed\n %v", err)
+		}
+
+		err = buck.Delete(itob(int(id)))
+		if err != nil {
+			log.Fatalf("Failed delete task to db\n %v", err)
+		}
+		return nil
+	})
+
+	if err != nil {
+		log.Fatalf("Failed delete task to db\n %v", err)
+	}
+
+	return true
+}
+
 // itob returns an 8-byte big endian representation of v.
 func itob(v int) []byte {
 	b := make([]byte, 8)
@@ -71,9 +150,14 @@ func itob(v int) []byte {
 	return b
 }
 
-func ViewTasks() []Task {
+func ViewTasks(completed bool) []Task {
 	db := openDBConn()
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("Failed close db connection %v\n", err)
+		}
+	}()
 	tasks := make([]Task, 0)
 
 	err := db.View(func(tx *bolt.Tx) error {
@@ -89,7 +173,9 @@ func ViewTasks() []Task {
 			if err != nil {
 				log.Fatalf("Error unmarshalling task %v\n", err)
 			}
-			tasks = append(tasks, t)
+			if t.Completed == completed {
+				tasks = append(tasks, t)
+			}
 		}
 
 		return nil

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/volodimyr/vikinGO/cli_task_manager/persistent"
+	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -16,16 +18,27 @@ var rootCmd = &cobra.Command{
 	Use:   "task_manager",
 	Short: "To do list. Make your life easier.",
 	Long:  `Be cool to organize your life with this application. Add, delete, list and remove your daily routine tasks.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// some code
-	},
+	Run:   func(cmd *cobra.Command, args []string) {},
 }
 
 var do = &cobra.Command{
 	Use:   "do",
-	Short: "Mark a task on your TODO list as complete",
+	Short: "Mark a task on your TODO list as completed",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Doing your task...")
+		if len(args) > 1 {
+			log.Fatalln("Too many arguments.")
+		}
+		if len(args) == 0 {
+			log.Fatalln("Please provide number of task")
+		}
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Invalid number of task.")
+		}
+		done := persistent.MarkCompleted(id)
+		if done {
+			log.Println("Marked as completed ")
+		}
 	},
 }
 
@@ -49,7 +62,7 @@ var list = &cobra.Command{
 	Use:   "list",
 	Short: "List all of your incomplete tasks",
 	Run: func(cmd *cobra.Command, args []string) {
-		tasks := persistent.ViewTasks()
+		tasks := persistent.ViewTasks(false)
 		if len(tasks) == 0 {
 			fmt.Println("Not found")
 		}
@@ -65,15 +78,36 @@ var completed = &cobra.Command{
 	Use:   "completed",
 	Short: "List all completed tasks today",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("List of completed tasks...")
+		tasks := persistent.ViewTasks(true)
+		if len(tasks) == 0 {
+			fmt.Println("Not found")
+		}
+		index := 1
+		for _, v := range tasks {
+			fmt.Printf("%d. %s\n", index, v.Name)
+			index++
+		}
 	},
 }
 
 var rm = &cobra.Command{
-	Use:   "remove",
+	Use:   "rm",
 	Short: "Remove your daily routine task",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Removing your task...")
+		if len(args) > 1 {
+			log.Fatalln("Too many arguments.")
+		}
+		if len(args) == 0 {
+			log.Fatalln("Please provide number of task")
+		}
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Invalid number of task.")
+		}
+		removed := persistent.RemoveTask(id)
+		if removed {
+			log.Println("Successfully removed")
+		}
 	},
 }
 
