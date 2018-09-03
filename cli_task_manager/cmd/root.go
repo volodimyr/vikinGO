@@ -35,7 +35,7 @@ var do = &cobra.Command{
 		if err != nil {
 			log.Fatalln("Invalid number of task.")
 		}
-		done := persistent.MarkCompleted(id)
+		done := persistent.Do(id)
 		if done {
 			log.Println("Marked as completed ")
 		}
@@ -66,10 +66,8 @@ var list = &cobra.Command{
 		if len(tasks) == 0 {
 			fmt.Println("Not found")
 		}
-		index := 1
 		for _, v := range tasks {
-			fmt.Printf("%d. %s\n", index, v.Name)
-			index++
+			fmt.Printf("%d. %s\n", v.ID, v.Name)
 		}
 	},
 }
@@ -82,10 +80,8 @@ var completed = &cobra.Command{
 		if len(tasks) == 0 {
 			fmt.Println("Not found")
 		}
-		index := 1
 		for _, v := range tasks {
-			fmt.Printf("%d. %s\n", index, v.Name)
-			index++
+			fmt.Printf("%d. %s\n", v.ID, v.Name)
 		}
 	},
 }

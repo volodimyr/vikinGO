@@ -69,7 +69,7 @@ func AddTask(name string) bool {
 	return true
 }
 
-func MarkCompleted(id int) bool {
+func Do(id int) bool {
 	db := openDBConn()
 	defer func() {
 		err := db.Close()
@@ -78,9 +78,7 @@ func MarkCompleted(id int) bool {
 		}
 	}()
 
-	t := Task{}
-
-	db.View(func(tx *bolt.Tx) error {
+	db.Batch(func(tx *bolt.Tx) error {
 		buck := tx.Bucket([]byte(bucket))
 		if buck == nil {
 			log.Fatalln("Couldn't get bucket error")
@@ -89,17 +87,12 @@ func MarkCompleted(id int) bool {
 		if v == nil {
 			log.Fatalf("Couldn't find next element [%d]", id)
 		}
+		t := Task{}
 		err := json.Unmarshal([]byte(v), &t)
 		if err != nil {
 			log.Fatalf("Error unmarshalling task %v\n", err)
 		}
-		return nil
-	})
-	db.Update(func(tx *bolt.Tx) error {
-		buck := tx.Bucket([]byte(bucket))
-		if buck == nil {
-			log.Fatalln("Couldn't get bucket error")
-		}
+
 		t.Completed = true
 		encoded, err := json.Marshal(t)
 		if err != nil {
