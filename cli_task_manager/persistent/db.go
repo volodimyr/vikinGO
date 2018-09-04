@@ -4,13 +4,14 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"github.com/boltdb/bolt"
+	"github.com/mitchellh/go-homedir"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 )
 
 const (
-	dbPath = "resources/my.db"
-
 	//bolt db bucket
 	bucket = "task"
 )
@@ -25,10 +26,19 @@ type Task struct {
 //don't forget to close connection
 //defer db.Close()
 func openDBConn() *bolt.DB {
+	home, _ := homedir.Dir()
+	dbPath := filepath.Join(home, "resources", string(os.PathSeparator), "task.db")
 	db, err := bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 3 * time.Second})
 	if err != nil {
 		log.Fatal(err)
 	}
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+		if err != nil {
+			log.Fatalf("Create bucket operation failed\n %v", err)
+		}
+		return nil
+	})
 	return db
 }
 
@@ -42,9 +52,9 @@ func AddTask(name string) bool {
 	}()
 
 	err := db.Update(func(tx *bolt.Tx) error {
-		buck, err := tx.CreateBucketIfNotExists([]byte(bucket))
-		if err != nil {
-			log.Fatalf("Create bucket operation failed\n %v", err)
+		buck := tx.Bucket([]byte(bucket))
+		if buck == nil {
+			log.Fatalf("Failed get tasks from db\n Bucket is non-existed.")
 		}
 		id, err := buck.NextSequence()
 		if err != nil {
@@ -117,12 +127,11 @@ func RemoveTask(id int) bool {
 	}()
 
 	err := db.Update(func(tx *bolt.Tx) error {
-		buck, err := tx.CreateBucketIfNotExists([]byte(bucket))
-		if err != nil {
-			log.Fatalf("Create bucket operation failed\n %v", err)
+		buck := tx.Bucket([]byte(bucket))
+		if buck == nil {
+			log.Fatalf("Failed get tasks from db\n Bucket is non-existed.")
 		}
-
-		err = buck.Delete(itob(int(id)))
+		err := buck.Delete(itob(int(id)))
 		if err != nil {
 			log.Fatalf("Failed delete task to db\n %v", err)
 		}

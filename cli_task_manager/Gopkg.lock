@@ -18,6 +18,14 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ae18d6b8b3205b561c79e8e5f69bff09736185f4"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:645cabccbb4fa8aab25a956cbcbdf6a6845ca736b2c64e197ca7cbb9d210b939"
   name = "github.com/spf13/cobra"
   packages = ["."]
@@ -35,6 +43,17 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:6f01451e2a1e704f721d964dcfbcbfc63fb2ab3d21476ab3e28b683503d8b076"
+  name = "github.com/volodimyr/vikinGO"
+  packages = [
+    "cli_task_manager/cmd",
+    "cli_task_manager/persistent",
+  ]
+  pruneopts = "UT"
+  revision = "234bec5629310835069195e68be35b1d34315a5d"
+
+[[projects]]
+  branch = "master"
   digest = "1:4b487c782bc804d994e91adbd3d2a8a77a482671efd87b2fde0805adb01a39c0"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -46,7 +65,10 @@
   analyzer-version = 1
   input-imports = [
     "github.com/boltdb/bolt",
+    "github.com/mitchellh/go-homedir",
     "github.com/spf13/cobra",
+    "github.com/volodimyr/vikinGO/cli_task_manager/cmd",
+    "github.com/volodimyr/vikinGO/cli_task_manager/persistent",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
